@@ -1,0 +1,8 @@
+github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaRUnok+kx1WdO15EQc=
+github.com/patrickmn/go-cache v2.1.0+incompatible/go.mod h1:3Qf8kWWT7OJRJbdiICTKqZju1ZixQ/KpMGzzAfe6+WQ=
+github.com/spaolacci/murmur3 v1.1.0 h1:7c1g84S4BPRrfL5Xrdp6fOJ206sU9y293DDHaoy0bLI=
+github.com/spaolacci/murmur3 v1.1.0/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
+github.com/txthinking/socks5 v0.0.0-20190404052647-254e122c4eaf h1:ZrsN4g6dBxtjk0emNLtovRstNJSxb23NykzOV40uDzQ=
+github.com/txthinking/socks5 v0.0.0-20190404052647-254e122c4eaf/go.mod h1:d3n8NJ6QMRb6I/WAlp4z5ZPAoaeqDmX5NgVZA0mhe+I=
+github.com/txthinking/x v0.0.0-20190708114625-99b19c1440b6 h1:83ZBGe0NTnQv23LTipNVs8KeNDXMQbUfF/8CPg2r7Tc=
+github.com/txthinking/x v0.0.0-20190708114625-99b19c1440b6/go.mod h1:WgqbSEmUYSjEV3B1qmee/PpP2NYEz4bL9/+mF1ma+s4=
