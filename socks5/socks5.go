@@ -29,6 +29,11 @@ const (
 	ATYPIPv4   byte = 0x01
 	ATYPDomain byte = 0x03
 	ATYPIPv6   byte = 0x04
+
+	// reply
+	ReplySuccess            byte = 0x00
+	ReplyRemoteAddrConnFail byte = 0x01
+	ReplyCommandNonSupport  byte = 0x02
 )
 
 // NegotiationRequest is the negotiation request packet.
@@ -40,8 +45,8 @@ type NegotiationRequest struct {
 
 // NegotiationReply is the negotiation reply packet.
 type NegotiationReply struct {
-	Ver     byte
-	Methods byte
+	Ver    byte
+	Method byte
 }
 
 // UsernamePasswordNegotiationRequest is the negotiation username/password request packet.
@@ -80,7 +85,7 @@ type SocksReply struct {
 }
 
 // SocksUDPDatagramRequest is the UDP packet.
-type SocksUDPDatagramRequest struct {
+type SocksUDPDatagram struct {
 	Ver     byte
 	FRAG    byte   // current fragment number
 	ATYP    byte   // address type, IP V4 : 0x01, domain name : 0x03, IP V6 : 0x04

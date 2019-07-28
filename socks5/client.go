@@ -32,7 +32,7 @@ type Client struct {
 	UDPDeadline int
 }
 
-func NewSocks5Client(username, password, addr string, tcpTimeout, tcpDeadline, udpDeadline int) (*Client, error) {
+func NewClient(username, password, addr string, tcpTimeout, tcpDeadline, udpDeadline int) (*Client, error) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
 	if nil != err {
 		return nil, err
@@ -88,13 +88,13 @@ func (c *Client) Negotiation() error {
 
 	// step 3: read proxy server reply.
 	// proxy server return expect socks protocol version and next action.
-	negotiationReply, err := NewNegotiationReply(c.DstTCPConn)
+	negotiationReply, err := ParseNegotiationReply(c.DstTCPConn)
 	if nil != err {
 		return err
 	}
 
 	// step 4: authorization validate
-	if negotiationReply.Methods != method {
+	if negotiationReply.Method != method {
 		return ErrNonSupportCurrentMethod
 	}
 
@@ -122,7 +122,7 @@ func (c *Client) Request(request *SocksRequest) (*SocksReply, error) {
 		return nil, err
 	}
 
-	socksReply, err := NewSocksReply(c.DstTCPConn)
+	socksReply, err := ParseSocksReply(c.DstTCPConn)
 	if nil != err {
 		return nil, err
 	}
@@ -163,8 +163,8 @@ func (request *NegotiationRequest) WriteTo(dstConn *net.TCPConn) error {
 	return nil
 }
 
-// 2. negotiation reply
-func NewNegotiationReply(conn *net.TCPConn) (*NegotiationReply, error) {
+// 2. parse negotiation reply
+func ParseNegotiationReply(conn *net.TCPConn) (*NegotiationReply, error) {
 	reply := make([]byte, 2) // according to socks protocol, it's only two bytes.
 	if _, err := io.ReadFull(conn, reply); nil != err {
 		return nil, err
@@ -179,8 +179,8 @@ func NewNegotiationReply(conn *net.TCPConn) (*NegotiationReply, error) {
 	}
 
 	return &NegotiationReply{
-		Ver:     reply[0],
-		Methods: reply[1],
+		Ver:    reply[0],
+		Method: reply[1],
 	}, nil
 }
 
@@ -249,7 +249,15 @@ func NewUsernamePasswordNegotiationReply(conn *net.TCPConn) (*UsernamePasswordNe
 }
 
 // 5. socks request
-func NewSocksRequest(cmd, atyp byte, dstAddr, dstPort []byte) *SocksRequest {
+func NewSocksRequest(cmd, atyp byte, dstAddr, dstPort []byte) (*SocksRequest, error) {
+	if len(dstAddr) == 0 || len(dstAddr) < 2 {
+		return nil, ErrBadRequest
+	}
+
+	// first byte is domain length.
+	if atyp == ATYPDomain {
+		dstAddr = append([]byte{byte(len(dstAddr))}, dstAddr...)
+	}
 	return &SocksRequest{
 		Ver:     SocksVer,
 		CMD:     cmd,
@@ -257,30 +265,30 @@ func NewSocksRequest(cmd, atyp byte, dstAddr, dstPort []byte) *SocksRequest {
 		ATYP:    atyp,
 		DstAddr: dstAddr,
 		DstPort: dstPort,
-	}
+	}, nil
 }
 
-func (r *SocksRequest) WriteTo(dstConn *net.TCPConn) error {
-	if _, err := dstConn.Write([]byte{r.Ver, r.CMD, r.RSV, r.ATYP}); nil != err {
+func (r *SocksRequest) WriteTo(conn *net.TCPConn) error {
+	if _, err := conn.Write([]byte{r.Ver, r.CMD, r.RSV, r.ATYP}); nil != err {
 		return err
 	}
 
-	if _, err := dstConn.Write(r.DstAddr); nil != err {
+	if _, err := conn.Write(r.DstAddr); nil != err {
 		return err
 	}
 
-	if _, err := dstConn.Write(r.DstPort); nil != err {
+	if _, err := conn.Write(r.DstPort); nil != err {
 		return err
 	}
 
 	if Debug {
-		log.Printf("Sent Socks5Request: socks protocol version: %#v, cmd: %#v, atyp: %#v, dst_addr: %#v, dst_port: %#v \n", r.Ver, r.CMD, r.ATYP, r.DstAddr, r.DstPort)
+		log.Printf("Client Sent Socks5Request: socks protocol version: %#v, cmd: %#v, atyp: %#v, dst_addr: %#v, dst_port: %#v \n", r.Ver, r.CMD, r.ATYP, r.DstAddr, r.DstPort)
 	}
 	return nil
 }
 
-// 6. socks reply
-func NewSocksReply(dstConn *net.TCPConn) (*SocksReply, error) {
+// 6. parse socks reply
+func ParseSocksReply(dstConn *net.TCPConn) (*SocksReply, error) {
 	reply := make([]byte, 4) // every field 1 byte. VER, REP, RSV(resevred field), ATYP
 	if _, err := io.ReadFull(dstConn, reply); nil != err {
 		return nil, err
@@ -329,7 +337,7 @@ func NewSocksReply(dstConn *net.TCPConn) (*SocksReply, error) {
 	}
 
 	if Debug {
-		log.Printf("Received SocksReply: expect socks protocol version: %#v, rep status: %#v, atyp: %#v, bind_address: %#v, bind_port: %#v \n", SocksVer, reply[1], atyp, addr, port)
+		log.Printf("Client Received SocksReply: socks protocol version: %#v, rep status: %#v, atyp: %#v, bind_address: %#v, bind_port: %#v \n", SocksVer, reply[1], atyp, addr, port)
 	}
 
 	return &SocksReply{
