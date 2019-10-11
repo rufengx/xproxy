@@ -18,7 +18,6 @@ var (
 	ErrRequestFail                           = errors.New("socks client request fail")
 )
 
-// it's a socks5 client wrapper
 type Client struct {
 	Username string
 	Password string
